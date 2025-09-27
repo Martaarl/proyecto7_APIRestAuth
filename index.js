@@ -9,6 +9,7 @@ const platformsRouter = require('./src/api/routes/platforms')
 const cors= require("cors");
 const app = express();
 const { connectDB } = require("./src/config/db");
+const usersRouter = require("./src/api/routes/users");
 
 app.use(express.json());
 app.use(cors());
@@ -17,6 +18,7 @@ connectDB();
 
 app.use("/api/characters", characterRouter);
 app.use("/api/platforms", platformsRouter);
+app.use("/api/users", usersRouter)
 
 app.use((req, res) => {
     return res.status(404).json("Route not found");
