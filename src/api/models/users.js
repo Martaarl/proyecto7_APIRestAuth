@@ -9,7 +9,8 @@ const usersSchema = new mongoose.Schema({
         required: true, 
         enum: ["admin", "user"], 
         default: "user",
-    }
+    }, 
+    characters: [{ type: mongoose.Types.ObjectId, ref: "Character"}]
 }, {
     timestamps: true, 
     collection: true

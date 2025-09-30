@@ -1,3 +1,4 @@
+const { isAuth, isAdmin } = require("../../middlewares/auth");
 const express = require("express");
 const { getCharacters, getCharactersById, getCharactersByMovie, putCharacters, postCharacters, deleteCharacters } = require("../controllers/characters");
 
@@ -13,9 +14,9 @@ const characterRouter = express.Router();
 characterRouter.get("/movie/:movie", getCharactersByMovie)
 characterRouter.get("/:id", getCharactersById);
 characterRouter.get("/", getCharacters);
-characterRouter.post("/", postCharacters);
-characterRouter.put("/:id", putCharacters);
-characterRouter.delete("/:id", deleteCharacters);
+characterRouter.post("/", [isAuth] ,postCharacters);
+characterRouter.put("/:id",[isAdmin], putCharacters);
+characterRouter.delete("/:id", [isAdmin] ,deleteCharacters);
 
 
 module.exports = characterRouter;
