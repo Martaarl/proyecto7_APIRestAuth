@@ -18,12 +18,59 @@ const getUsers = async (req, res, next) => {
     }
 }
 
+const getUserByName = async (req, res, next) => {
+    try {
+        
+        const {userName} = req.params;
+        const user = await User.findOne({userName});
+
+        if (!user) {
+            return res.status(404).json("Usuario no encontrado");
+        }
+
+        if (req.user.rol !== "admin" && req.user.userName !== userName) {
+            return res.status(403).json({message: "No tienes permisos para ver este usuario"})
+        }
+
+        user.password = undefined;
+
+        return res.status(200).json(user);
+
+    } catch (error) {
+        return res.status(400).json({message: "Error al actualizar el usuario"})
+    }
+}
+
+const updateUser = async (req, res, next) => {
+    try {
+        const {userName} = req.params;
+        const {rol} = req.body;
+
+        const user = await User.findOne({userName});
+        if (!user) {
+            return res.status(404).json("Usuario no encontrado")
+        };
+
+        if (req.user.rol !== "admin") {
+            return res.status(403).json("Solo un admin puede cambiar roles")
+        }
+
+        user.rol = rol;
+        await user.save();
+
+        return res.status(200).json({message: "Rol actualizado", user})
+
+    } catch (error) {
+        return res.status(400).json("Error al actualizar el rol del usuario")
+    }
+}
+
 const register = async (req, res, next) => {
     try {
         const newUser  = new User({
             userName: req.body.userName,
             password: req.body.password, 
-            rol: req.body.rol || "user"
+            rol: req.body.rol && req.body.rol === "admin" ? "admin" : "user"
         });
         const duplicateUser = await lookForUser(req.body.userName);
         
@@ -63,13 +110,18 @@ const deleteUser = async (req, res, next) => {
         const {userName} = req.params;
         const user = await User.findOne({userName});
         if (!user) {
-            return res.status(400),json("No se encuentra al usuario")
+            return res.status(400).json("No se encuentra al usuario")
+        }
+
+        if(req.user.rol !=="admin" && req.user.userName !== userName){
+            return res.status(403).json("No tienes permisos para eliminar a este usuario")
         }
 
         await User.deleteOne({userName})
+        return res.status(200).json({message: "Usuario eliminado correctamente"})
     } catch (error) {
-        res.status(400).json("Errorrrrr")
+        res.status(400).json("Error al eliminar el usuario")
     }
 }
 
-module.exports = {getUsers, register, login, deleteUser};
+module.exports = {getUsers, getUserByName, updateUser, register, login, deleteUser};

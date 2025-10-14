@@ -6,9 +6,9 @@ const isAuth = async (req, res, next) => {
         const token = req.headers.authorization;
         const parsedToken = token.replace("Bearer ", "");
 
-        const {id} = verifyJwt(parsedToken);
+        const {userId} = verifyJwt(parsedToken);
         
-        const user = await User.findById(id);
+        const user = await User.findById(userId);
         
         user.password = null;
         req.user = user;
@@ -24,9 +24,9 @@ const isAdmin = async (req, res, next) => {
         const token = req.headers.authorization;
         const parsedToken = token.replace("Bearer ", "");
 
-        const {id} = verifyJwt(parsedToken);
+        const {userId} = verifyJwt(parsedToken);
         
-        const user = await User.findById(id);
+        const user = await User.findById(userId);
         
         if(user.rol === "admin") {
         user.password = null;

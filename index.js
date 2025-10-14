@@ -3,8 +3,8 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 
-const characterRouter = require('./src/api/routes/characters');
-const platformsRouter = require('./src/api/routes/platforms')
+const artistsRouter = require('./src/api/routes/artists');
+const albumsRouter = require('./src/api/routes/albums')
 
 const cors= require("cors");
 const app = express();
@@ -16,8 +16,10 @@ app.use(cors());
 
 connectDB();
 
-app.use("/api/characters", characterRouter);
-app.use("/api/platforms", platformsRouter);
+app.use("/api/artists", artistsRouter);
+console.log("Router montado");
+
+app.use("/api/albums", albumsRouter);
 app.use("/api/users", usersRouter)
 
 app.use((req, res) => {
