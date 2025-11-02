@@ -5,7 +5,7 @@ const getArtist = async (req, res, next) => {
         const artists = await Artist.find().populate("albums");
         return res.status(200).json(artists);
     } catch (error) {
-        return res.status(400).json("Error al obtener los artistas");
+        return res.status(500).json({error: "Error al obtener los artistas", details: error.message});
     }
 }
 
@@ -18,14 +18,11 @@ const getArtistById = async (req, res, next) => {
 
        return res.status(200).json(artist);
     } catch (error) {
-        return res.status(400).json("Error en la solicitud id del artista");
+        return res.status(500).json({error: "Error en la solicitud id del artista", details: error.message});
     }
 }
 
 const postArtist = async (req, res, next) => {
-
-    console.log("POST /artists llamado");
-    console.log("REQ.BODY:", req.body);
 
     try {
         const newArtist = new Artist(req.body);
@@ -33,8 +30,7 @@ const postArtist = async (req, res, next) => {
         return res.status(201).json(artistSaved);
 
     } catch (error) {
-        console.error("ERROR:", error)
-        return res.status(400).json( "Error al crear el artista");
+        return res.status(500).json({error: "Error al crear el artista", details: error.message});
     }
 }
 
@@ -47,27 +43,23 @@ const putArtist = async (req, res, next) => {
             return res.status(404).json("No se ha encontrado al artista")
         }
 
-        let newArtist= new Artist(req.body)
+       const updateArtist= {
+        name: allArtist.name,
+        image: allArtist.image,
+        genre: allArtist.genre
+       };
 
-        newArtist = {
-            _id: id,
-            name: allArtist.name,
-            image: allArtist.image,
-            genre: allArtist.genre,
-            albums: [...allArtist.albums]
-        };
-
-         if(req.body.albums && Array.isArray(req.body.albums)){
-        newArtist.albums = [...allArtist.albums, ...req.body.albums];
+        if(req.body.albums && Array.isArray(req.body.albums)){
+        updateArtist.$addToSet = {albums: {$each: req.body.albums}};
         }
 
-        const artistUpdated = await Artist.findByIdAndUpdate(id, newArtist, {
+        const artistUpdated = await Artist.findByIdAndUpdate(id, updateArtist, {
             new: true,
         });
         
         return res.status(200).json(artistUpdated);
     } catch (error) {
-        return res.status(400).json("Error al actualizar el artista");
+        return res.status(500).json({error: "Error al actualizar el artista", details: error.message});
     }
 }
 
@@ -81,7 +73,7 @@ const deleteArtist = async (req, res, next) => {
 
        return res.status(200).json(artistDeleted);
     } catch (error) {
-        return res.status(400).json("Error al eliminar al artista")
+        return res.status(500).json({error: "Error al eliminar al artista", details: error.message})
     }
 }
 

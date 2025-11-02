@@ -1,11 +1,12 @@
-const Album = require("../models/albums")
+const Album = require("../models/albums");
+
 
 const getAlbums = async (req, res, next) => {
     try {
         const albums = await Album.find().populate("artist");
         return res.status(200).json(albums);
     } catch (error) {
-        return res.status(400).json({error: error.message});
+        return res.status(500).json({error: "Error obteniendo los álbumes", details: error.message});
         };
     
 }
@@ -15,12 +16,12 @@ const getAlbumById = async (req, res, next) => {
        const { id } = req.params;
        const album = await Album.findById(id).populate("artist");
 
-       if (!album) {return res.status(404).json("No se ha encontrado este álbum")};
+       if (!album) {return res.status(404).json({error: "No se ha encontrado este álbum", details: error.message})};
 
        return res.status(200).json(album);
-
+    
     } catch (error) {
-        return res.status(400).json("Error en la solicitud id");
+        return res.status(500).json({error: "Álbum no encontrado", details: error.message});
     }
 }
 
@@ -31,7 +32,7 @@ const postAlbum = async (req, res, next) => {
         const albumSaved = await newAlbum.save();
         return res.status(201).json(albumSaved);
     } catch (error) {
-        return res.status(400).json("Error creando al personaje");
+        return res.status(400).json({error: "Error creando el álbum", details: error.message});
     }
 }
 
@@ -42,28 +43,23 @@ const putAlbum = async (req, res, next) => {
         
         if (!allAlbum) { return res.status(404).json("No se ha encontrado el álbum a actualizar")};
 
-        let newAlbum = new Album(req.body);
-        newAlbum = {
-            _id: id,
-            title: req.body.title || allAlbum.title,
+        const updateAlbum = {
+            title: req.body.title||allAlbum.title,
             year: req.body.year || allAlbum.year,
-            image: req.body.image || allAlbum.image, 
-            artist: [...allAlbum.artist]
+            image: req.body.image || allAlbum.image
         }
-
         if(req.body.artist && Array.isArray(req.body.artist)){
-        newAlbum.artist = [...allAlbum.artist, ...req.body.artist];
+        updateAlbum.$addToSet = {artist: {$each: req.body.artist}};
         }
 
-        const albumsUpdated = await Album.findByIdAndUpdate(id, newAlbum, {
+        const albumsUpdated = await Album.findByIdAndUpdate(id, updateAlbum, {
             new: true,
         });
         return res.status(200).json(albumsUpdated);
     } catch (error) {
-        return res.status(400).json("Error al actualizar el álbum");
+        return res.status(500).json({error: "Error al actualizar el álbum", details: error.message});
     }
 }
-
 
 const deleteAlbum = async (req, res, next) => {
     try {
@@ -74,7 +70,7 @@ const deleteAlbum = async (req, res, next) => {
 
        return res.status(200).json(albumsDeleted);
     } catch (error) {
-        return res.status(400).json("Error al eliminar el álbum")
+        return res.status(500).json({error: "Error al eliminar el álbum", details: error.message})
     }
 }
 
