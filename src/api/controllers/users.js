@@ -1,4 +1,5 @@
 
+const { error } = require("console");
 const { generateSign } = require("../../config/jwt.js");
 const User = require("../models/users.js");
 const bcrypt = require("bcrypt");
@@ -44,7 +45,7 @@ const getUserByName = async (req, res, next) => {
 const updateUser = async (req, res, next) => {
     try {
         const {userName} = req.params;
-        const {rol} = req.body;
+        const {rol, newUserName, password} = req.body;
 
         const user = await User.findOne({userName});
         if (!user) {
@@ -57,6 +58,23 @@ const updateUser = async (req, res, next) => {
 
         if (!["user", "admin"].includes(rol)) {
             return res.status(400).json({error: "Rol no válido"})
+        }
+
+        if (newUserName){
+            const existName = await User.findOne({userName: newUserName});
+            if (existName) {
+                return res.status(400).json({error: "Ya existe este usuario", details: error.message})
+            }
+            user.userName = newUserName;
+        }
+
+        if (password) {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            user.password = hashedPassword;
+        }
+
+        if (req.user.rol !== "admin" && req.user.userName !== userName){
+            return res.status(403).json("No tienes permiso para modificar este usuario")
         }
 
         user.rol = rol;
