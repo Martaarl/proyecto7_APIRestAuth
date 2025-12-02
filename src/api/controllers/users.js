@@ -51,16 +51,24 @@ const updateUser = async (req, res, next) => {
         if (!user) {
             return res.status(404).json("Usuario no encontrado")
         };
-
-        if (req.user.rol !== "admin") {
+/*
+        if (rol) {
+             if (req.user.rol !== "admin") {
             return res.status(403).json("Solo un admin puede cambiar roles")
+                }
+
+            if (!["user", "admin"].includes(rol)) {
+                return res.status(400).json({error: "Rol no válido"})
+            }
+
+            user.rol = rol;
         }
 
-        if (!["user", "admin"].includes(rol)) {
-            return res.status(400).json({error: "Rol no válido"})
-        }
 
         if (newUserName){
+            if (req.user.rol !== "admin" && req.user.userName !== userName) {
+                return res.status(403).json("No tienes permiso para cambiar este usuario")
+            }
             const existName = await User.findOne({userName: newUserName});
             if (existName) {
                 return res.status(400).json({error: "Ya existe este usuario", details: error.message})
@@ -69,15 +77,14 @@ const updateUser = async (req, res, next) => {
         }
 
         if (password) {
+            if (req.user.userName !== userName) {
+                return res.status(403).json({error: "Solo el propio usuario puede cambiar la contraseña", details: error.message})
+            }
+
             const hashedPassword = await bcrypt.hash(password, 10);
             user.password = hashedPassword;
         }
-
-        if (req.user.rol !== "admin" && req.user.userName !== userName){
-            return res.status(403).json("No tienes permiso para modificar este usuario")
-        }
-
-        user.rol = rol;
+*/
         await user.save();
 
         const userToShow = {
@@ -149,6 +156,10 @@ const addAlbumToUser = async (req, res, next) => {
     try {
     const {userId} = req.params;
     const {albumId} = req.body;
+
+    if (!albumId) {
+        return res.status(403).json({error: "No se encuentra este album"})
+    }
 
     const user = await User.findById(userId);
     if (!user) {

@@ -42,20 +42,24 @@ const putArtist = async (req, res, next) => {
         if (!allArtist) {
             return res.status(404).json("No se ha encontrado al artista")
         }
-
-       const updateArtist= {
-        name: allArtist.name,
-        image: allArtist.image,
-        genre: allArtist.genre
-       };
-
+/*
+        if (req.body.name) allArtist.name = req.body.name;
+        if (req.body.image) allArtist.image = req.body.image;
+        if (req.body.genre) allArtist.genre = req.body.genre;
+    
         if(req.body.albums && Array.isArray(req.body.albums)){
-        updateArtist.$addToSet = {albums: {$each: req.body.albums}};
+            req.body.albums.forEach(albumId => {
+                const id = albumId;
+                const albumExist = allArtist.albums.includes(id);
+
+                if (!albumExist) {
+                    allArtist.albums.push(id)
+                }
+            });
         }
 
-        const artistUpdated = await Artist.findByIdAndUpdate(id, updateArtist, {
-            new: true,
-        });
+        const artistUpdated = await allArtist.save();
+        });*/
         
         return res.status(200).json(artistUpdated);
     } catch (error) {

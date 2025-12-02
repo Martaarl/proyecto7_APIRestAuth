@@ -8,7 +8,7 @@ usersRouter.get("/:userName", [isAuth], getUserByName);
 usersRouter.put("/:userName", [isAuth, isAdmin], updateUser)
 usersRouter.post("/register", register);
 usersRouter.post("/login", login);
-usersRouter.put("/userId/albums", addAlbumToUser)
+usersRouter.put("/:userId/albums", addAlbumToUser)
 usersRouter.delete("/:userName",[isAuth], deleteUser);
 
 

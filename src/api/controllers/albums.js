@@ -41,20 +41,22 @@ const putAlbum = async (req, res, next) => {
         const { id } = req.params;
         const allAlbum = await Album.findById(id);
         
-        if (!allAlbum) { return res.status(404).json("No se ha encontrado el álbum a actualizar")};
+        if (!allAlbum) {return res.status(404).json("No se ha encontrado el álbum a actualizar")};
+/*
+        if(req.body.title) allAlbum.title = req.body.title;
+        if(req.body.year) allAlbum.year = req.body.year;
+        if(req.body.image) allAlbum.image = req.body.image;
 
-        const updateAlbum = {
-            title: req.body.title||allAlbum.title,
-            year: req.body.year || allAlbum.year,
-            image: req.body.image || allAlbum.image
-        }
         if(req.body.artist && Array.isArray(req.body.artist)){
-        updateAlbum.$addToSet = {artist: {$each: req.body.artist}};
+            req.body.artist.forEach(artistId => {
+                if (!allAlbum.artist.includes(artistId)) {
+                    allAlbum.artist.push(artistId);
+                }
+            });
         }
 
-        const albumsUpdated = await Album.findByIdAndUpdate(id, updateAlbum, {
-            new: true,
-        });
+        const albumsUpdated = await allAlbum.save();
+    */
         return res.status(200).json(albumsUpdated);
     } catch (error) {
         return res.status(500).json({error: "Error al actualizar el álbum", details: error.message});
