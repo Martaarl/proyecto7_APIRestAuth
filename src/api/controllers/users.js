@@ -7,12 +7,23 @@ const bcrypt = require("bcrypt");
 
 const lookForUser = async (userName) => {
     const user = await User.findOne({userName});
+
+    if (!user) {
+        return res.status(404).json("No se encuentra a este usuario")
+    }
+
+  //  user.password = undefined;
     return user;
 }
 
 const getUsers = async (req, res, next) => {
     try {
         const users = await User.find();
+
+      /*  users.forEach(user =>{
+            user.password = undefined;
+        })*/
+
         return res.status(200).json(users);
     } catch (error) {
         return res.status(500).json({error: "Error obteniendo usuarios", details: error.message});
