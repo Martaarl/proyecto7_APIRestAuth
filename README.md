@@ -65,9 +65,10 @@ Servidor corriendo en: http://localhost:3000
 ___
 ## 🔐 Roles y permisos
 * User
-    *   Puede registrarse y autenticarse.
+    * Puede registrarse y autenticarse.
     * Puede ver artistas, álbumes y su propio perfil.
     * Puede eliminar su propia cuenta.
+    * Puede añadir álbunes a favoritos.
 * Admin
     * Puede ver, crear, modificar y eliminar cualquier usuario.
     * Puede cambiar el rol de un usuario a “admin”.
@@ -75,8 +76,8 @@ ___
 ___
 ## 🔑 Autenticación
 * Todos los endpoints sensibles requieren token JWT.
-* Middleware isAuth valida token.
-* Middleware isAdmin valida que el usuario sea administrador.
+* Middleware `authenticate` valida token.
+* Middleware `isAdmin` valida que el usuario sea administrador.
 ___
 ## MODELOS
 ### User
@@ -109,6 +110,7 @@ ___
 | **POST** | `/login` | Login y obtención de token JWT | ❌ |
 | **GET** | `/` | Obtener todos los usuarios | ✅ (Admin) |
 | **GET** | `/:userName` | Obtener usuario por nombre | ✅ (Admin o el propio usuario) |
+| **PUT** | `/:userName` | Actualiza un usuario (rol solo admin, contraseña solo el propio usuario) | ✅ (Admin o propio usuario) |
 | **DELETE** | `/:userName` | Eliminar usuario | ✅ (Admin o el propio usuario) |
 
 #### 🧾 Ejemplo de cuerpo para registro
@@ -170,6 +172,7 @@ Semilla para cargar datos iniciales de álbumes (y/o artistas) en la base de dat
 ```bash
 node src/utils/seeds.js
 ```
+La semilla requiere que los artistas existan previamente, porque el campo `artist` en álbum es obligatorio.
 ___
 ## 🔗 Relaciones entre colecciones
 
@@ -179,7 +182,7 @@ ___
 ___
 ## 🛠️ Uso
 
-1.  Configura .env con la URL de tu base de datos y la clave JWT
+1. Configura .env con la URL de tu base de datos y la clave JWT
 2. Ejecuta npm install
 3. Levanta el servidor: npm run dev
 Prueba los endpoints con Insomnia o Postman

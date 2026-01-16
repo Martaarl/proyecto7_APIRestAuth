@@ -1,5 +1,5 @@
 const Album = require("../models/albums");
-
+const { all } = require("../routes/users");
 
 const getAlbums = async (req, res, next) => {
     try {
@@ -7,7 +7,7 @@ const getAlbums = async (req, res, next) => {
         return res.status(200).json(albums);
     } catch (error) {
         return res.status(500).json({error: "Error obteniendo los álbumes", details: error.message});
-        };
+    };
     
 }
 
@@ -39,16 +39,21 @@ const postAlbum = async (req, res, next) => {
 const putAlbum = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const allAlbum = await Album.findById(id);
-        
-        if (!allAlbum) {return res.status(404).json("No se ha encontrado el álbum a actualizar")};
-/*
-        if(req.body.title) allAlbum.title = req.body.title;
-        if(req.body.year) allAlbum.year = req.body.year;
-        if(req.body.image) allAlbum.image = req.body.image;
+        const updates = req.body;
 
-        if(req.body.artist && Array.isArray(req.body.artist)){
-            req.body.artist.forEach(artistId => {
+        const allAlbum = await Album.findById(id);
+        if (!allAlbum) {return res.status(404).json("No se ha encontrado el álbum a actualizar")};
+
+        if (req.user.rol !== "admin"){
+            return res.status(403).json("Solo un administrador puede modicar un álbum");
+        }
+
+        if(req.body.title !== undefined) allAlbum.title = updates.title;
+        if(req.body.year !== undefined) allAlbum.year = updates.year;
+        if(req.body.image !== undefined) allAlbum.image = updates.image;
+
+        if(updates.artist && Array.isArray(updates.artist)){
+            updates.artist.forEach(artistId => {
                 if (!allAlbum.artist.includes(artistId)) {
                     allAlbum.artist.push(artistId);
                 }
@@ -56,7 +61,7 @@ const putAlbum = async (req, res, next) => {
         }
 
         const albumsUpdated = await allAlbum.save();
-    */
+    
         return res.status(200).json(albumsUpdated);
     } catch (error) {
         return res.status(500).json({error: "Error al actualizar el álbum", details: error.message});

@@ -7,24 +7,18 @@ const bcrypt = require("bcrypt");
 
 const lookForUser = async (userName) => {
     const user = await User.findOne({userName});
-
     if (!user) {
-        return res.status(404).json("No se encuentra a este usuario")
+        throw new Error ("No se encuentra a este usuario");
     }
-
-  //  user.password = undefined;
     return user;
 }
 
 const getUsers = async (req, res, next) => {
     try {
         const users = await User.find();
-
-      /*  users.forEach(user =>{
-            user.password = undefined;
-        })*/
-
+        users.forEach(user =>{user.password = undefined;})
         return res.status(200).json(users);
+
     } catch (error) {
         return res.status(500).json({error: "Error obteniendo usuarios", details: error.message});
     }
@@ -32,12 +26,12 @@ const getUsers = async (req, res, next) => {
 
 const getUserByName = async (req, res, next) => {
     try {
-        
         const {userName} = req.params;
-        const user = await User.findOne({userName});
-
-        if (!user) {
-            return res.status(404).json("Usuario no encontrado");
+        let user;
+        try {
+            user = await lookForUser(userName);
+        } catch (error) {
+            return res.status(404).json(error.message);
         }
 
         if (req.user.rol !== "admin" && req.user.userName !== userName) {
@@ -58,50 +52,56 @@ const updateUser = async (req, res, next) => {
         const {userName} = req.params;
         const {rol, newUserName, password} = req.body;
 
-        const user = await User.findOne({userName});
-        if (!user) {
-            return res.status(404).json("Usuario no encontrado")
-        };
-/*
-        if (rol) {
-             if (req.user.rol !== "admin") {
-            return res.status(403).json("Solo un admin puede cambiar roles")
-                }
-
-            if (!["user", "admin"].includes(rol)) {
-                return res.status(400).json({error: "Rol no válido"})
-            }
-
-            user.rol = rol;
+        let userToUpdate;
+        try {
+            userToUpdate = await lookForUser(userName);
+        } catch (error) {
+            return res.status(404).json(error.message);
         }
 
+        const isAdmin = req.user.rol === "admin";
+        const isSameUser = req.user.userName === userName;
 
-        if (newUserName){
-            if (req.user.rol !== "admin" && req.user.userName !== userName) {
-                return res.status(403).json("No tienes permiso para cambiar este usuario")
-            }
-            const existName = await User.findOne({userName: newUserName});
-            if (existName) {
-                return res.status(400).json({error: "Ya existe este usuario", details: error.message})
-            }
-            user.userName = newUserName;
+        if (!isAdmin && !isSameUser) {
+            return res.status(403).json("No tienes permisos para actualizar este usuario");
+        }
+    
+        if (newUserName) {
+            if (!isAdmin && !isSameUser) {
+                return res.status(403).json("No tienes permisos para actualizar este usuario");}
+
+            const existingUser = await User.findOne({userName : newUserName })
+            if (existingUser) {
+                return res.status(400).json("Ese nombre de usuario ya existe")}
+
+            userToUpdate.userName = newUserName;
         }
 
         if (password) {
-            if (req.user.userName !== userName) {
+            if (!isSameUser) {
                 return res.status(403).json({error: "Solo el propio usuario puede cambiar la contraseña", details: error.message})
             }
 
             const hashedPassword = await bcrypt.hash(password, 10);
-            user.password = hashedPassword;
+            userToUpdate.password = hashedPassword;
         }
-*/
-        await user.save();
+
+        if (rol) {
+            if (!isAdmin) {
+                return res.status(403).json("Solo un admin puede cambiar el rol")
+            }
+            if (!["user", "admin"].includes(rol)) {
+                return res.status(400).json("Rol no válido")
+            }
+            userToUpdate.rol = rol
+        }
+
+        await userToUpdate.save();
 
         const userToShow = {
-            _id: user._id,
-            userName: user.userName,
-            rol: user.rol
+            _id: userToShow._id,
+            userName: userToShow.userName,
+            rol: userToShow.rol
         }
 
         return res.status(200).json({message: "Rol actualizado", userToShow})
@@ -113,16 +113,17 @@ const updateUser = async (req, res, next) => {
 
 const register = async (req, res, next) => {
     try {
+        try {
+            await lookForUser(req.body.userName);
+            return res.status(400).json("Este usuario ya existe");
+        } catch (error) {
+            
+        }
         const newUser  = new User({
             userName: req.body.userName,
             password: req.body.password, 
             rol: "user"
         });
-        const duplicateUser = await lookForUser(req.body.userName);
-        
-        if (duplicateUser) {
-            return res.status(400).json("Este usuario ya existe");
-        }
         
         const userSaved = await newUser.save();
 
@@ -140,22 +141,26 @@ const register = async (req, res, next) => {
 
 const login = async (req, res, next) => {
     try {
-        const user = await User.findOne({userName: req.body.userName});
+        let user;
+        try {
+            user = await lookForUser(req.body.userName);
+        } catch (error) {
+            return res.status(400).json("Usuario no existente");
+        }
+        
+        if (!bcrypt.compareSync(req.body.password, user.password)) {
+            return res.status(400).json("Contraseña incorrecta")
+        }
+        
+        const token = generateSign(user.id)
 
-        if (!user) {
-            return res.status(400).json("Usuario no existente")
-        } 
-        if (bcrypt.compareSync(req.body.password, user.password)) {
-            const token = generateSign(user.id);
-
-            const userToReturn = {
-                _id: user._id,
-                userName: user.userName,
-                rol: user.rol
-            }
-
-            return res.status(200).json({userToReturn, token});
-        } 
+        const userToReturn = {
+            _id: user._id,
+            userName: user.userName,
+            rol: user.rol
+        
+        }
+    return res.status(200).json({userToReturn, token});
         
     } catch (error) {
          return res.status(500).json({error: "Error logeando", details: error.message});
@@ -177,6 +182,10 @@ const addAlbumToUser = async (req, res, next) => {
         return res.status(404).json({error: "Usuario no encontrado"})
     }
 
+    if (req.user.rol !== "admin" && req.user._id.toString() !== userId) {
+        return res.status(403).json({error: "No tienes permisos para modificar este usuario"})
+    }
+
     if (!user.favoriteAlbums.includes(albumId)) {
         user.favoriteAlbums.push(albumId);
         await user.save();
@@ -192,9 +201,11 @@ const deleteUser = async (req, res, next) => {
     try {
 
         const {userName} = req.params;
-        const user = await User.findOne({userName});
-        if (!user) {
-            return res.status(400).json("No se encuentra al usuario")
+        let user = await lookForUser(userName);
+        try {
+            user = await lookForUser(userName);
+        } catch (error) {
+            return res.status(404).json(error.message)
         }
 
         if(req.user.rol !=="admin" && req.user.userName !== userName){

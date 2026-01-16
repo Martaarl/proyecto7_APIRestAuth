@@ -37,29 +37,30 @@ const postArtist = async (req, res, next) => {
 const putArtist = async (req, res, next) => {
     try {
         const { id } = req.params;
-        const allArtist= await Artist.findById(id);
+        const updates = req.body;
 
+        const allArtist= await Artist.findById(id);
         if (!allArtist) {
             return res.status(404).json("No se ha encontrado al artista")
         }
-/*
-        if (req.body.name) allArtist.name = req.body.name;
-        if (req.body.image) allArtist.image = req.body.image;
-        if (req.body.genre) allArtist.genre = req.body.genre;
-    
-        if(req.body.albums && Array.isArray(req.body.albums)){
-            req.body.albums.forEach(albumId => {
-                const id = albumId;
-                const albumExist = allArtist.albums.includes(id);
 
-                if (!albumExist) {
-                    allArtist.albums.push(id)
+        if (req.user.rol !== "admin") {
+            return res.status(403).json("Solo un administrador puede modificar un artista")
+        }
+
+        if (updates.name) allArtist.name = updates.name;
+        if (updates.image) allArtist.image = updates.image;
+        if (updates.genre) allArtist.genre = updates.genre;
+    
+        if(updates.albums && Array.isArray(updates.albums)){
+            updates.albums.forEach(albumId => {
+                if (!allArtist.albums.includes(albumId)) {
+                    allArtist.albums.push(albumId)
                 }
             });
         }
 
         const artistUpdated = await allArtist.save();
-        });*/
         
         return res.status(200).json(artistUpdated);
     } catch (error) {
