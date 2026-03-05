@@ -20,7 +20,8 @@ const getUsers = async (req, res, next) => {
         return res.status(200).json(users);
 
     } catch (error) {
-        return res.status(500).json({error: "Error obteniendo usuarios", details: error.message});
+        console.error(error)
+        return res.status(500).json({error: "Error interno del servidor"});
     }
 }
 
@@ -31,7 +32,7 @@ const getUserByName = async (req, res, next) => {
         try {
             user = await lookForUser(userName);
         } catch (error) {
-            return res.status(404).json(error.message);
+            return res.status(404).json({error: "Usuario no encontrado"});
         }
 
         if (req.user.rol !== "admin" && req.user.userName !== userName) {
@@ -43,20 +44,21 @@ const getUserByName = async (req, res, next) => {
         return res.status(200).json(user);
 
     } catch (error) {
-        return res.status(500).json({error: "Error al actualizar el usuario", details: error.message})
+        console.error(error);
+        return res.status(500).json({error: "Error interno del servidor"})
     }
 }
 
 const updateUser = async (req, res, next) => {
     try {
         const {userName} = req.params;
-        const {rol, newUserName, password} = req.body;
+        const {rol, newUserName, oldPassword, newPassword} = req.body;
 
         let userToUpdate;
         try {
             userToUpdate = await lookForUser(userName);
         } catch (error) {
-            return res.status(404).json(error.message);
+            return res.status(404).json("Usuario no encontrado");
         }
 
         const isAdmin = req.user.rol === "admin";
@@ -77,9 +79,9 @@ const updateUser = async (req, res, next) => {
             userToUpdate.userName = newUserName;
         }
 
-        if (password) {
+        if (oldPassword && newPassword) {
             if (!isSameUser) {
-                return res.status(403).json({error: "Solo el propio usuario puede cambiar la contraseña", details: error.message})
+                return res.status(403).json({error: "Solo el propio usuario puede cambiar la contraseña"})
             }
 
             const hashedPassword = await bcrypt.hash(password, 10);
@@ -99,25 +101,26 @@ const updateUser = async (req, res, next) => {
         await userToUpdate.save();
 
         const userToShow = {
-            _id: userToShow._id,
-            userName: userToShow.userName,
-            rol: userToShow.rol
+            _id: userToUpdate._id,
+            userName: userToUpdate.userName,
+            rol: userToUpdate.rol
         }
 
         return res.status(200).json({message: "Rol actualizado", userToShow})
 
     } catch (error) {
-        return res.status(500).json({error: "Error al actualizar el rol del usuario", details: error.message})
+        return res.status(500).json({error: "Error interno del servidor"})
     }
 }
 
 const register = async (req, res, next) => {
     try {
-        try {
-            await lookForUser(req.body.userName);
-            return res.status(400).json("Este usuario ya existe");
-        } catch (error) {
-            
+        const existingtUser = await User.findOne({userName: req.body.userName})
+
+        if (existingtUser) {
+            return res.status(400).json({
+                error: "Este usuario ya existe"
+            })
         }
         const newUser  = new User({
             userName: req.body.userName,
@@ -135,21 +138,20 @@ const register = async (req, res, next) => {
         return res.status(201).json(userShowed);
 
     } catch (error) {
-         return res.status(500).json({error: "Error registrando el usuario", details: error.message});
+        console.error(error);
+         return res.status(500).json({error: "Error interno del servidor"});
     }
 }
 
 const login = async (req, res, next) => {
     try {
-        let user;
-        try {
-            user = await lookForUser(req.body.userName);
-        } catch (error) {
-            return res.status(400).json("Usuario no existente");
+        const user = await User.findOne({userName: req.body})
+        if (!user) {
+            return res.status(400).json({error: "Usuario no existente"})
         }
         
         if (!bcrypt.compareSync(req.body.password, user.password)) {
-            return res.status(400).json("Contraseña incorrecta")
+            return res.status(400).json({error:"Contraseña incorrecta"})
         }
         
         const token = generateSign(user.id)
@@ -163,7 +165,7 @@ const login = async (req, res, next) => {
     return res.status(200).json({userToReturn, token});
         
     } catch (error) {
-         return res.status(500).json({error: "Error logeando", details: error.message});
+         return res.status(500).json({error: "Error interno del servidor"});
     }
 }
 
@@ -193,20 +195,16 @@ const addAlbumToUser = async (req, res, next) => {
     return res.status(200).json(user);
 
     } catch (error) {
-        return res.status(500).json({error: "Error añadiendo el álbum", details: error.message})
+        return res.status(500).json({error: "Error interno del servidor"})
     }
 }
 
 const deleteUser = async (req, res, next) => {
     try {
-
         const {userName} = req.params;
-        let user = await lookForUser(userName);
-        try {
-            user = await lookForUser(userName);
-        } catch (error) {
-            return res.status(404).json(error.message)
-        }
+        const  user = await lookForUser(userName);
+    
+        if(!user){return res.status(404).json("Usuario no encontrado")}
 
         if(req.user.rol !=="admin" && req.user.userName !== userName){
             return res.status(403).json("No tienes permisos para eliminar a este usuario")
@@ -215,7 +213,7 @@ const deleteUser = async (req, res, next) => {
         await User.deleteOne({userName})
         return res.status(200).json({message: "Usuario eliminado correctamente"})
     } catch (error) {
-        res.status(500).json({error:"Error al eliminar el usuario", details: error.message})
+        res.status(500).json({error:"Error interno del servidor"})
     }
 }
 

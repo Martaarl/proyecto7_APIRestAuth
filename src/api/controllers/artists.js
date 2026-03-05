@@ -5,7 +5,8 @@ const getArtist = async (req, res, next) => {
         const artists = await Artist.find().populate("albums");
         return res.status(200).json(artists);
     } catch (error) {
-        return res.status(500).json({error: "Error al obtener los artistas", details: error.message});
+        console.error(error);
+        return res.status(500).json({error: "Error interno del servidor"});
     }
 }
 
@@ -18,7 +19,7 @@ const getArtistById = async (req, res, next) => {
 
        return res.status(200).json(artist);
     } catch (error) {
-        return res.status(500).json({error: "Error en la solicitud id del artista", details: error.message});
+        return res.status(500).json({error: "Error interno del servidor"});
     }
 }
 
@@ -30,7 +31,8 @@ const postArtist = async (req, res, next) => {
         return res.status(201).json(artistSaved);
 
     } catch (error) {
-        return res.status(500).json({error: "Error al crear el artista", details: error.message});
+        console.error(error);
+        return res.status(400).json({error: "Error al crear el artista"});
     }
 }
 
@@ -42,10 +44,6 @@ const putArtist = async (req, res, next) => {
         const allArtist= await Artist.findById(id);
         if (!allArtist) {
             return res.status(404).json("No se ha encontrado al artista")
-        }
-
-        if (req.user.rol !== "admin") {
-            return res.status(403).json("Solo un administrador puede modificar un artista")
         }
 
         if (updates.name) allArtist.name = updates.name;
@@ -64,7 +62,8 @@ const putArtist = async (req, res, next) => {
         
         return res.status(200).json(artistUpdated);
     } catch (error) {
-        return res.status(500).json({error: "Error al actualizar el artista", details: error.message});
+        console.error(error);
+        return res.status(500).json({error: "Error interno del servidor"});
     }
 }
 
@@ -78,7 +77,8 @@ const deleteArtist = async (req, res, next) => {
 
        return res.status(200).json(artistDeleted);
     } catch (error) {
-        return res.status(500).json({error: "Error al eliminar al artista", details: error.message})
+        console.error(error);
+        return res.status(500).json({error: "Error interno del servidor"})
     }
 }
 

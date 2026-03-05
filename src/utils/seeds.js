@@ -19,19 +19,19 @@ const seedAlbums = async () => {
                 title: "Fix you", 
                 year: 2005, 
                 image: "https://upload.wikimedia.org/wikipedia/en/b/b1/Coldplay_-_Fix_You.jpg", 
-                artist: [idColdplay]
+                artist: [coldplay._id]
             }, 
             {
                 title: "Amaneceres", 
                 year: 2023, 
                 image: "https://t2.genius.com/unsafe/360x360/https%3A%2F%2Fimages.genius.com%2F6513e224826247a1b22584ec8d0f62a6.960x960x1.jpg", 
-                artist: [idSFDK]
+                artist: [sfdk._id]
             }, 
             {
                 title: "Stand By Me", 
                 year: 1962, 
                 image: "https://eltrasterodepalacio.wordpress.com/wp-content/uploads/2013/12/stand-by-me-ben-e-king-04.jpg", 
-                artist: [idBenEKing]
+                artist: [benEKing._id]
             }
         ];
 

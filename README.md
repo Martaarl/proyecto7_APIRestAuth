@@ -46,7 +46,7 @@ ___
 ## ⚡️ Instalación
 1. Clonar el repositorio:
 ```bash
-git clone <URL_DEL_REPOSITORIO>
+git clone <https://github.com/Martaarl/proyecto7_APIRestAuth.git>
 ```
 2. Instalar dependencias:
 ```bash

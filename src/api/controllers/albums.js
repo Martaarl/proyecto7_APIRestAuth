@@ -6,7 +6,8 @@ const getAlbums = async (req, res, next) => {
         const albums = await Album.find().populate("artist");
         return res.status(200).json(albums);
     } catch (error) {
-        return res.status(500).json({error: "Error obteniendo los álbumes", details: error.message});
+        console.error(error);
+        return res.status(500).json({error: "Error interno del servidor"});
     };
     
 }
@@ -16,12 +17,13 @@ const getAlbumById = async (req, res, next) => {
        const { id } = req.params;
        const album = await Album.findById(id).populate("artist");
 
-       if (!album) {return res.status(404).json({error: "No se ha encontrado este álbum", details: error.message})};
+       if (!album) {return res.status(404).json({error: "No se ha encontrado este álbum"})};
 
        return res.status(200).json(album);
     
     } catch (error) {
-        return res.status(500).json({error: "Álbum no encontrado", details: error.message});
+        console.error(error);
+        return res.status(500).json({error: "Error interno del servidor"});
     }
 }
 
@@ -32,7 +34,9 @@ const postAlbum = async (req, res, next) => {
         const albumSaved = await newAlbum.save();
         return res.status(201).json(albumSaved);
     } catch (error) {
-        return res.status(400).json({error: "Error creando el álbum", details: error.message});
+        console.error(error);
+        return res.status(400).json({error: "Error creando el álbum"
+        });
     }
 }
 
@@ -44,13 +48,9 @@ const putAlbum = async (req, res, next) => {
         const allAlbum = await Album.findById(id);
         if (!allAlbum) {return res.status(404).json("No se ha encontrado el álbum a actualizar")};
 
-        if (req.user.rol !== "admin"){
-            return res.status(403).json("Solo un administrador puede modicar un álbum");
-        }
-
-        if(req.body.title !== undefined) allAlbum.title = updates.title;
-        if(req.body.year !== undefined) allAlbum.year = updates.year;
-        if(req.body.image !== undefined) allAlbum.image = updates.image;
+        if(updates.title !== undefined) allAlbum.title = updates.title;
+        if(updates.year !== undefined) allAlbum.year = updates.year;
+        if(updates.image !== undefined) allAlbum.image = updates.image;
 
         if(updates.artist && Array.isArray(updates.artist)){
             updates.artist.forEach(artistId => {
@@ -64,7 +64,8 @@ const putAlbum = async (req, res, next) => {
     
         return res.status(200).json(albumsUpdated);
     } catch (error) {
-        return res.status(500).json({error: "Error al actualizar el álbum", details: error.message});
+        console.error(error);
+        return res.status(500).json({error: "Error interno del servidor"});
     }
 }
 
@@ -77,7 +78,8 @@ const deleteAlbum = async (req, res, next) => {
 
        return res.status(200).json(albumsDeleted);
     } catch (error) {
-        return res.status(500).json({error: "Error al eliminar el álbum", details: error.message})
+        console.error(error);
+        return res.status(500).json({error: "Error interno del servidor"})
     }
 }
 
